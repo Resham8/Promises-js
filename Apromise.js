@@ -5,6 +5,7 @@ const STATE = {
 }
 class aPromise {
   #thenCbs = [];
+  #catchCbs = [];
   #state = STATE.PENDING;
   #value;
 
@@ -16,23 +17,45 @@ class aPromise {
     }
   }
 
+  #runCallbacks() {
+    if (this.#state === STATE.FULFILLED) {
+      this.#thenCbs.forEach(callback => {
+        callback(this.#value)
+      })
+
+      this.#thenCbs = [];
+    }
+
+    if (this.#state === STATE.REJECTED) {
+      this.#catchCbs.forEach(callback => {
+        callback(this.#value)
+      })
+
+      this.#catchCbs = [];
+    }
+
+  }
+
   #onSuccess(value) {
     if (this.#state !== STATE.PENDING) return;
     this.#value = value;
     this.#state = STATE.FULFILLED;
+    this.#runCallbacks();
   }
 
   #onFail(value) {
     if (this.#state !== STATE.PENDING) return;
     this.#value = value;
     this.#state = STATE.REJECTED;
+    this.#runCallbacks();
   }
 
   then(cb) {
     this.#thenCbs.push(cb);
+    return this;
   }
 }
 
 module.exports = aPromise;
 
-const p = new Promise(cb);
+// const p = new Promise(cb);
