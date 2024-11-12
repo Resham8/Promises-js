@@ -8,10 +8,12 @@ class aPromise {
   #catchCbs = [];
   #state = STATE.PENDING;
   #value;
+  #onSuccessBind = this.#onSuccess.bind(this);
+  #onFailBind = this.#onFail.bind(this);
 
   constructor(cb) {
     try {
-      cb(this.#onSuccess, this.#onFail);
+      cb(this.#onSuccessBind, this.#onFailBind);
     } catch (error) {
       this.#onFail(error);
     }
@@ -50,9 +52,45 @@ class aPromise {
     this.#runCallbacks();
   }
 
-  then(cb) {
-    this.#thenCbs.push(cb);
-    return this;
+  then(thenCb, catchCb) {
+    return new aPromise((resolve, reject) => {
+      this.#thenCbs.push(result => {
+        if (thenCb === null) {
+          resolve(result);
+          return;
+        }
+
+        try {
+          resolve(thenCb(result));
+        } catch (error) {
+          reject(error)
+        }
+      });
+
+      this.#catchCbs.push(result => {
+        if (catchCb === null) {
+          resolve(result);
+          return;
+        }
+
+        try {
+          reject(catchCb(result));
+        } catch (error) {
+          reject(error)
+        }
+      });
+
+      this.#runCallbacks();    
+    })
+        
+  }
+
+  catch(cb){
+    this.then(undefined, cb);
+  }
+
+  finally(cb){
+    
   }
 }
 
